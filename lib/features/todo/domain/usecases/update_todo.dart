@@ -5,5 +5,5 @@ class UpdateTodo {
   final TodoRepository repository;
   const UpdateTodo(this.repository);
 
-  void call(Todo todo) => repository.updateTodo(todo);
+  Future<void> call(Todo todo) => repository.updateTodo(todo);
 }
