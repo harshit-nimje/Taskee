@@ -4,16 +4,17 @@ import '../model/todo_hive_model.dart';
 import 'todo_local_datasource.dart';
 
 const String _todoBoxName = 'todoBox';
-const String _latestIdBoxName = "latestIdBox";
-const String _latestIdName = "_latestId";
+const String _latestIdBoxName = 'latestIdBox';
+const String _latestIdName = '_latestId';
 
 class HiveTodoLocalDataSource implements TodoLocalDataSource {
   late final Box<TodoHiveModel> _todoBox;
   late final Box<int> _lastIdBox;
 
   Future<void> initialize() async {
-    Hive.registerAdapter(TodoHiveModelAdapter());
-
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(TodoHiveModelAdapter());
+    }
     _todoBox = await Hive.openBox<TodoHiveModel>(_todoBoxName);
     _lastIdBox = await Hive.openBox<int>(_latestIdBoxName);
   }
@@ -23,20 +24,25 @@ class HiveTodoLocalDataSource implements TodoLocalDataSource {
 
   @override
   Future<void> save(TodoHiveModel todo) async {
+    // Preserve an existing ID when restoring a deleted task. New tasks use
+    // the next ID, while the counter is advanced to avoid future collisions.
     final latestId = _lastIdBox.get(_latestIdName, defaultValue: 0) ?? 0;
-    final newLatestId = latestId + 1;
+    final id = todo.id > 0 ? todo.id : latestId + 1;
     final entity = TodoHiveModel(
-      id: newLatestId,
+      id: id,
       title: todo.title,
       isCompleted: todo.isCompleted,
       dueAt: todo.dueAt,
     );
-    await _todoBox.put(entity.id, entity);
-    await _lastIdBox.put(_latestIdName, newLatestId);
+    await _todoBox.put(id, entity);
+    if (id > latestId) {
+      await _lastIdBox.put(_latestIdName, id);
+    }
   }
 
   @override
-  Future<void> update(int id, TodoHiveModel todo) => _todoBox.put(id, todo);
+  Future<void> update(int id, TodoHiveModel todo) =>
+      _todoBox.put(id, todo);
 
   @override
   Future<void> delete(int id) => _todoBox.delete(id);
