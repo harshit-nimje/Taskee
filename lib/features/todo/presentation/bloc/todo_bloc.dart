@@ -44,6 +44,20 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     emit(TodoLoadedState(TodoListModel(todoList: getAllTodos())));
   }
 
+  // Reminder delivery is secondary to saving the task. A permission or
+  // platform scheduling error must not make a successful CRUD action fail.
+  Future<void> _trySchedule(Todo todo) async {
+    try {
+      await scheduleTaskNotification(todo);
+    } catch (_) {}
+  }
+
+  Future<void> _tryCancel(int id) async {
+    try {
+      await cancelTaskNotification(id);
+    } catch (_) {}
+  }
+
   void _onStarted(TodoStartedEvent event, Emitter<TodoState> emit) {
     try {
       emit(TodoLoadingState());
@@ -59,7 +73,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   ) async {
     try {
       await addTodo(event.todo);
-      await scheduleTaskNotification(event.todo);
+      await _trySchedule(event.todo);
       _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
@@ -72,8 +86,8 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   ) async {
     try {
       await updateTodo(event.todo);
-      await cancelTaskNotification(event.todo.id);
-      await scheduleTaskNotification(event.todo);
+      await _tryCancel(event.todo.id);
+      await _trySchedule(event.todo);
       _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
@@ -86,8 +100,11 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   ) async {
     try {
       await toggleCompleteTodo(event.todo);
-      if (!event.todo.isCompleted) {
-        await cancelTaskNotification(event.todo.id);
+      if (event.todo.isCompleted) {
+        // It was completed and is now active again.
+        await _trySchedule(event.todo);
+      } else {
+        await _tryCancel(event.todo.id);
       }
       _emitCurrentList(emit);
     } catch (_) {
@@ -101,7 +118,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   ) async {
     try {
       await deleteTodo(event.id);
-      await cancelTaskNotification(event.id);
+      await _tryCancel(event.id);
       _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
@@ -114,7 +131,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   ) async {
     try {
       await undoDeletedTodo(event.todo);
-      await scheduleTaskNotification(event.todo);
+      await _trySchedule(event.todo);
       _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
