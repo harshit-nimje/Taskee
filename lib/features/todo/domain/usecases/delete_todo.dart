@@ -4,5 +4,5 @@ class DeleteTodo {
   final TodoRepository repository;
   DeleteTodo(this.repository);
 
-  void call(int id) => repository.deleteTodo(id);
+  Future<void> call(int id) => repository.deleteTodo(id);
 }
