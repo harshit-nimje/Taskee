@@ -6,21 +6,19 @@ import 'package:taskee/features/note/domain/repository/note_repository.dart';
 class NoteRepositoryImpl implements NoteRepository {
   final NoteLocalDatasource localDatasource;
   NoteRepositoryImpl(this.localDatasource);
-  @override
-  void addNote(Note note) {
-    localDatasource.save(note.toHiveModel());
-  }
 
   @override
-  List<Note> getNoteList() {
-    return localDatasource.getAll().map((e) => e.toDomain()).toList();
-  }
+  Future<void> addNote(Note note) =>
+      localDatasource.save(note.toHiveModel());
 
   @override
-  void updateNote(Note note) {
-    localDatasource.update(note.id, note.toHiveModel());
-  }
+  List<Note> getNoteList() =>
+      localDatasource.getAll().map((e) => e.toDomain()).toList();
 
   @override
-  void deleteNote(int id) => localDatasource.delete(id);
+  Future<void> updateNote(Note note) =>
+      localDatasource.update(note.id, note.toHiveModel());
+
+  @override
+  Future<void> deleteNote(int id) => localDatasource.delete(id);
 }
