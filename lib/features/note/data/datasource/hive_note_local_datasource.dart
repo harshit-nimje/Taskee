@@ -3,16 +3,17 @@ import 'package:taskee/features/note/data/datasource/note_local_datasource.dart'
 import 'package:taskee/features/note/data/model/note_hive_model.dart';
 
 const String _noteBoxName = 'noteBox';
-const String _latestIdBoxName = "noteLatestIdBox";
-const String _latestIdName = "_latestId";
+const String _latestIdBoxName = 'noteLatestIdBox';
+const String _latestIdName = '_latestId';
 
 class HiveNoteLocalDatasource implements NoteLocalDatasource {
   late final Box<NoteHiveModel> _noteBox;
   late final Box<int> _lastIdBox;
 
   Future<void> initialize() async {
-    Hive.registerAdapter(NoteHiveModelAdapter());
-
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(NoteHiveModelAdapter());
+    }
     _noteBox = await Hive.openBox<NoteHiveModel>(_noteBoxName);
     _lastIdBox = await Hive.openBox<int>(_latestIdBoxName);
   }
@@ -36,6 +37,7 @@ class HiveNoteLocalDatasource implements NoteLocalDatasource {
 
   @override
   Future<void> update(int id, NoteHiveModel note) => _noteBox.put(id, note);
+
   @override
   Future<void> delete(int id) => _noteBox.delete(id);
 }
