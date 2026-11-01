@@ -40,85 +40,82 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     on<TodoItemUndoDeletedEvent>(_onItemUndoDeleted);
   }
 
+  void _emitCurrentList(Emitter<TodoState> emit) {
+    emit(TodoLoadedState(TodoListModel(todoList: getAllTodos())));
+  }
+
   void _onStarted(TodoStartedEvent event, Emitter<TodoState> emit) {
-    emit(TodoLoadingState());
     try {
-      final dataList = getAllTodos();
-      emit(TodoLoadedState(TodoListModel(todoList: dataList)));
+      emit(TodoLoadingState());
+      _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
     }
   }
 
-  void _onItemAdded(TodoItemAddedEvent event, Emitter<TodoState> emit) async {
+  Future<void> _onItemAdded(
+    TodoItemAddedEvent event,
+    Emitter<TodoState> emit,
+  ) async {
     try {
-      addTodo(event.todo);
+      await addTodo(event.todo);
       await scheduleTaskNotification(event.todo);
-      final dataList = getAllTodos();
-      emit(TodoLoadedState(TodoListModel(todoList: dataList)));
+      _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
     }
   }
 
-  void _onItemUpdated(
+  Future<void> _onItemUpdated(
     TodoItemUpdatedEvent event,
     Emitter<TodoState> emit,
   ) async {
     try {
-      updateTodo(event.todo);
-      try {
-        await cancelTaskNotification(event.todo.id);
-      } catch (_) {}
+      await updateTodo(event.todo);
+      await cancelTaskNotification(event.todo.id);
       await scheduleTaskNotification(event.todo);
-      final dataList = getAllTodos();
-      emit(TodoLoadedState(TodoListModel(todoList: dataList)));
-    } catch (e, stackTrace) {
-      print('UPDATE ERROR: $e');
-      print('STACK: $stackTrace');
+      _emitCurrentList(emit);
+    } catch (_) {
       emit(const TodoErrorState());
     }
   }
 
-  void _onItemToggleCompleted(
+  Future<void> _onItemToggleCompleted(
     TodoItemToggleCompletedEvent event,
     Emitter<TodoState> emit,
   ) async {
-    emit(TodoLoadingState());
     try {
-      toggleCompleteTodo(event.todo);
-      //  cancel notification if task is completed
+      await toggleCompleteTodo(event.todo);
       if (!event.todo.isCompleted) {
         await cancelTaskNotification(event.todo.id);
       }
-      add(TodoStartedEvent());
+      _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
     }
   }
 
-  void _onItemDeleted(
+  Future<void> _onItemDeleted(
     TodoItemDeletedEvent event,
     Emitter<TodoState> emit,
   ) async {
-    emit(TodoLoadingState());
     try {
-      deleteTodo(event.id);
+      await deleteTodo(event.id);
       await cancelTaskNotification(event.id);
-      add(TodoStartedEvent());
+      _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
     }
   }
 
-  void _onItemUndoDeleted(
+  Future<void> _onItemUndoDeleted(
     TodoItemUndoDeletedEvent event,
     Emitter<TodoState> emit,
   ) async {
     try {
-      undoDeletedTodo(event.todo);
+      await undoDeletedTodo(event.todo);
       await scheduleTaskNotification(event.todo);
-      add(TodoStartedEvent());
+      _emitCurrentList(emit);
     } catch (_) {
       emit(const TodoErrorState());
     }
