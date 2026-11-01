@@ -5,6 +5,5 @@ class ToggleCompleteTodo {
   final TodoRepository repository;
   ToggleCompleteTodo(this.repository);
 
-  void call(Todo todo) => repository.toggleCompleteTodo(todo);
+  Future<void> call(Todo todo) => repository.toggleCompleteTodo(todo);
 }
-
