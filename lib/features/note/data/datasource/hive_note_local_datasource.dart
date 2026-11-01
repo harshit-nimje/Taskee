@@ -11,7 +11,7 @@ class HiveNoteLocalDatasource implements NoteLocalDatasource {
   late final Box<int> _lastIdBox;
 
   Future<void> initialize() async {
-    if (!Hive.isAdapterRegistered(1)) {
+    if (!Hive.isAdapterRegistered(2)) {
       Hive.registerAdapter(NoteHiveModelAdapter());
     }
     _noteBox = await Hive.openBox<NoteHiveModel>(_noteBoxName);
