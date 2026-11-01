@@ -5,5 +5,5 @@ class AddNote {
   final NoteRepository repository;
   AddNote(this.repository);
 
-  void call(Note note) => repository.addNote(note);
+  Future<void> call(Note note) => repository.addNote(note);
 }
