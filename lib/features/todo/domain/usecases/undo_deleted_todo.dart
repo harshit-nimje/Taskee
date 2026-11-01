@@ -5,5 +5,5 @@ class UndoDeletedTodo {
   final TodoRepository repository;
   UndoDeletedTodo(this.repository);
 
-  void call(Todo todo) => repository.addTodo(todo);
+  Future<void> call(Todo todo) => repository.addTodo(todo);
 }
