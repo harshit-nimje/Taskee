@@ -4,5 +4,5 @@ class DeleteNote {
   final NoteRepository repository;
   const DeleteNote(this.repository);
 
-  void call(int id) => repository.deleteNote(id);
+  Future<void> call(int id) => repository.deleteNote(id);
 }
