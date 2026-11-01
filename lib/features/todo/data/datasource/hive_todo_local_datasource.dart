@@ -12,7 +12,7 @@ class HiveTodoLocalDataSource implements TodoLocalDataSource {
   late final Box<int> _lastIdBox;
 
   Future<void> initialize() async {
-    if (!Hive.isAdapterRegistered(0)) {
+    if (!Hive.isAdapterRegistered(1)) {
       Hive.registerAdapter(TodoHiveModelAdapter());
     }
     _todoBox = await Hive.openBox<TodoHiveModel>(_todoBoxName);
@@ -24,9 +24,8 @@ class HiveTodoLocalDataSource implements TodoLocalDataSource {
 
   @override
   Future<void> save(TodoHiveModel todo) async {
-    // Preserve an existing ID when restoring a deleted task. New tasks use
-    // the next ID, while the counter is advanced to avoid future collisions.
     final latestId = _lastIdBox.get(_latestIdName, defaultValue: 0) ?? 0;
+    // Keep IDs when restoring a task; allocate one only for a new task.
     final id = todo.id > 0 ? todo.id : latestId + 1;
     final entity = TodoHiveModel(
       id: id,
@@ -41,8 +40,7 @@ class HiveTodoLocalDataSource implements TodoLocalDataSource {
   }
 
   @override
-  Future<void> update(int id, TodoHiveModel todo) =>
-      _todoBox.put(id, todo);
+  Future<void> update(int id, TodoHiveModel todo) => _todoBox.put(id, todo);
 
   @override
   Future<void> delete(int id) => _todoBox.delete(id);
