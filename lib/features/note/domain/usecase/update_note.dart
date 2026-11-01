@@ -5,5 +5,5 @@ class UpdateNote {
   final NoteRepository repository;
   const UpdateNote(this.repository);
 
-  void call(Note note) => repository.updateNote(note);
+  Future<void> call(Note note) => repository.updateNote(note);
 }
